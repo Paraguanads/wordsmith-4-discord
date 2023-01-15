@@ -5,7 +5,7 @@ import torch
 from discord.ext import commands
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-# Old school logging. You can turn this off on production.
+# Old school logging. You can turn this off in production.
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.DEBUG)
 
 # Load BART tokenizer
@@ -37,7 +37,7 @@ def predict_sentiment(text, model, tokenizer, device):
 from nltk.sentiment import SentimentIntensityAnalyzer
 sia = SentimentIntensityAnalyzer()
 
-# Summarize a text. Invoked by /summarize your text goes here
+# Summarize a text invoked by /summarize your text goes here
 def generate_summary(text, model, tokenizer, device, max_length=1024):
     input_ids = tokenizer.encode(text, return_tensors='pt').to(device)
     summary_ids = model.generate(input_ids, max_length=max_length)
@@ -48,21 +48,30 @@ def generate_summary(text, model, tokenizer, device, max_length=1024):
 async def resume(ctx, *, text: str):
     try:
         summary = generate_summary(text, model, tokenizer, device)
-        await ctx.send("Summary: {}".format(summary))
+        embed = discord.Embed(title='Summary', description=summary, color=0x00ff00)
+        await ctx.send(embed=embed)
     except Exception as e:
         await ctx.send("Error: {}".format(e))
 
-# Sentiment analysis command. Invoked by /sentiment your text goes here
+# Sentiment analysis command invoked by /sentiment your text goes here
 @bot.command()
 async def sentiment(ctx, *, text: str):
-    try:
-        sentiment = sia.polarity_scores(text)
-        await ctx.send("Sentiments on the provided text are between positive ~ {0},"
-                       " negative ~ {1} and neutral ~ {2}".format(sentiment['pos'],
-                                                           sentiment['neg'],
-                                                           sentiment['neu']))
-    except Exception as e:
-        await ctx.send("Error: {}".format(e))
+    sentiment = sia.polarity_scores(text)
+    sentiment_text = sentiment['compound']
+    sentiment_color = 0xffff00
+    if sentiment_text > 0:
+        sentiment_text = 'Positive'
+        sentiment_color = 0x00ff00
+    elif sentiment_text < 0:
+        sentiment_text = 'Negative'
+        sentiment_color = 0xff0000
+    else:
+        sentiment_text = 'Neutral'
+    embed = discord.Embed(title='Predominant sentiment', description=sentiment_text, color=sentiment_color)
+    embed.add_field(name='Negative', value=sentiment['neg'], inline=True)
+    embed.add_field(name='Neutral', value=sentiment['neu'], inline=True)
+    embed.add_field(name='Positive', value=sentiment['pos'], inline=True)
+    await ctx.send(embed=embed)
 
 # The bot is alive if you read this after running the script
 @bot.event
