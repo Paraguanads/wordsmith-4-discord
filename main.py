@@ -5,8 +5,17 @@ import torch
 from discord.ext import commands
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-# Old school logging. You can turn this off in production.
+# Old school logging
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.DEBUG)
+
+# Load Google Firebase
+import firebase_admin
+from firebase_admin import firestore, credentials
+
+cred = credentials.Certificate('path/to/your/credentials.json')
+firebase_admin.initialize_app(cred)
+
+db = firestore.client()
 
 # Load BART tokenizer
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -37,7 +46,20 @@ def predict_sentiment(text, model, tokenizer, device):
 from nltk.sentiment import SentimentIntensityAnalyzer
 sia = SentimentIntensityAnalyzer()
 
-# Summarize a text invoked by /summarize your text goes here
+# Sending sentiment of N discord channel messages to Firebase
+@bot.event
+async def on_message(message):
+    if message.channel.id == 'DISCORD_CHANNEL_ID':
+        sentiment = sia.polarity_scores(message.content)
+        data = {
+            'user_id': message.author.id,
+            'timestamp': message.created_at,
+            'message': message.content,
+            'sentiment': sentiment
+        }
+        db.collection('messages').add(data)
+
+# Summarize a text invoked by /summarize yourtextgoeshere
 def generate_summary(text, model, tokenizer, device, max_length=1024):
     input_ids = tokenizer.encode(text, return_tensors='pt').to(device)
     summary_ids = model.generate(input_ids, max_length=max_length)
@@ -77,14 +99,6 @@ async def sentiment(ctx, *, text: str):
 @bot.event
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
-
-# Error if the user doesn't provide a valid command
-@bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.CommandNotFound):
-        await ctx.send("Error: The command doesn't exist")
-    else:
-        await ctx.send("Error: {}".format(error))
 
 # Run the bot
 bot.run('w3ir1)7ok3nfr0md!5(0rd)385i7e') # Discord bot token
