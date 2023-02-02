@@ -8,7 +8,7 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 # Old school logging
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.DEBUG)
 
-# Load Google Firebase
+# Load Google Firebase (not implemented atm)
 import firebase_admin
 from firebase_admin import firestore, credentials
 
@@ -46,10 +46,10 @@ def predict_sentiment(text, model, tokenizer, device):
 from nltk.sentiment import SentimentIntensityAnalyzer
 sia = SentimentIntensityAnalyzer()
 
-# Sending sentiment of N discord channel messages to Firebase
+# Sending sentiment of N discord channel messages to Firebase (not implemented atm)
 @bot.event
 async def on_message(message):
-    if message.channel.id == 'DISCORD_CHANNEL_ID':
+    if message.channel.id == 'CHANNEL_DEV_ID':
         sentiment = sia.polarity_scores(message.content)
         data = {
             'user_id': message.author.id,
