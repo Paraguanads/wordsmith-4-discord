@@ -4,17 +4,17 @@ import discord
 import torch
 from discord.ext import commands
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+# Google Firebase (not implemented atm)
+import firebase_admin
+from firebase_admin import firestore, credentials
 
 # Old school logging
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.DEBUG)
 
-# Load Google Firebase (not implemented atm)
-import firebase_admin
-from firebase_admin import firestore, credentials
+# Login with Google Firebase (not implemented atm)
 
 cred = credentials.Certificate('path/to/your/credentials.json')
 firebase_admin.initialize_app(cred)
-
 db = firestore.client()
 
 # Load BART tokenizer
@@ -59,13 +59,13 @@ async def on_message(message):
         }
         db.collection('messages').add(data)
 
-# Summarize a text invoked by /summarize yourtextgoeshere
+# Basic summarization. Do not touch this
 def generate_summary(text, model, tokenizer, device, max_length=1024):
     input_ids = tokenizer.encode(text, return_tensors='pt').to(device)
     summary_ids = model.generate(input_ids, max_length=max_length)
     summary_text = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
     return summary_text
-
+# Summarize a text invoked by /summarize yourtextgoeshere
 @bot.command()
 async def resume(ctx, *, text: str):
     try:
@@ -95,7 +95,7 @@ async def sentiment(ctx, *, text: str):
     embed.add_field(name='Positive', value=sentiment['pos'], inline=True)
     await ctx.send(embed=embed)
 
-# The bot is alive if you read this after running the script
+# The bot is alive 🧟‍♂️ if you read this after running the script
 @bot.event
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
